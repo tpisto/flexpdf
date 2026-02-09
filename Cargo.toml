@@ -5,6 +5,10 @@ edition = "2021"
 description = "PDF generation from XML or Rust structures with flexbox layout"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
+homepage = "https://github.com/tpisto/flexpdf"
+repository = "https://github.com/tpisto/flexpdf"
+keywords = ["pdf", "flexbox", "xml", "layout", "document"]
+categories = ["text-processing", "template-engine"]
 
 [lib]
 path = "src/lib.rs"
