@@ -6,6 +6,7 @@ use crate::components::{
     FontDefinition,
     FontSource,
     HyphenationLang,
+    ImportedPdfPages,
     Orientation,
     Page,
     PageSize,
@@ -71,10 +72,20 @@ fn parse_document(reader: &mut Reader<&[u8]>, start: &BytesStart) -> Result<Docu
                 let tag_name = e.name();
                 if tag_name.as_ref() == b"Page" {
                     let page = parse_page(reader, e)?;
-                    doc.pages.push(page);
+                    doc.push_page(page);
                 } else if tag_name.as_ref() == b"Fonts" {
                     let fonts = parse_fonts(reader)?;
                     doc.fonts = fonts;
+                } else if tag_name.as_ref() == b"ImportPdf" {
+                    let import = parse_import_pdf(e)?;
+                    doc.push_import_pdf(import);
+                    skip_element(reader, "ImportPdf")?;
+                }
+            }
+            Ok(Event::Empty(ref e)) => {
+                if e.name().as_ref() == b"ImportPdf" {
+                    let import = parse_import_pdf(e)?;
+                    doc.push_import_pdf(import);
                 }
             }
             Ok(Event::End(ref e)) if e.name().as_ref() == b"Document" => {
@@ -88,6 +99,78 @@ fn parse_document(reader: &mut Reader<&[u8]>, start: &BytesStart) -> Result<Docu
     }
 
     Ok(doc)
+}
+
+fn parse_import_pdf(start: &BytesStart) -> Result<ImportedPdfPages, ParseError> {
+    let mut src: Option<String> = None;
+    let mut pages: Option<Vec<u32>> = None;
+
+    for attr in start.attributes() {
+        let attr = attr?;
+        let key = std::str::from_utf8(attr.key.as_ref())?;
+        let value = attr
+            .unescape_value()
+            .map_err(ParseError::XmlError)?
+            .into_owned();
+
+        match key {
+            "src" => src = Some(value),
+            "pages" => pages = Some(parse_import_pages(&value)?),
+            _ => {}
+        }
+    }
+
+    let src = src.ok_or_else(|| ParseError::AttrError("ImportPdf requires src".to_string()))?;
+    let pages = pages.ok_or_else(|| ParseError::AttrError("ImportPdf requires pages".to_string()))?;
+
+    Ok(ImportedPdfPages::new(src, pages))
+}
+
+fn parse_import_pages(value: &str) -> Result<Vec<u32>, ParseError> {
+    let mut pages = Vec::new();
+
+    for token in value.split(',').flat_map(|part| part.split_whitespace()) {
+        let token = token.trim();
+        if token.is_empty() {
+            continue;
+        }
+
+        if let Some((start, end)) = token.split_once('-') {
+            let start = start.trim().parse::<u32>().map_err(|_| {
+                ParseError::AttrError(format!("Invalid page number '{}'", start.trim()))
+            })?;
+            let end = end.trim().parse::<u32>().map_err(|_| {
+                ParseError::AttrError(format!("Invalid page number '{}'", end.trim()))
+            })?;
+            if start == 0 || end == 0 || start > end {
+                return Err(ParseError::AttrError(format!(
+                    "Invalid page range '{}'",
+                    token
+                )));
+            }
+            for page in start..=end {
+                pages.push(page);
+            }
+        } else {
+            let page = token
+                .parse::<u32>()
+                .map_err(|_| ParseError::AttrError(format!("Invalid page number '{}'", token)))?;
+            if page == 0 {
+                return Err(ParseError::AttrError(
+                    "Page numbers must be 1-based".to_string(),
+                ));
+            }
+            pages.push(page);
+        }
+    }
+
+    if pages.is_empty() {
+        return Err(ParseError::AttrError(
+            "ImportPdf pages list cannot be empty".to_string(),
+        ));
+    }
+
+    Ok(pages)
 }
 
 /// Parse <Fonts> element containing font definitions.

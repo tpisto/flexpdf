@@ -2,12 +2,13 @@
 
 mod borders;
 mod image;
+mod imported_pdf;
 mod text;
 
 use std::collections::{HashMap, HashSet};
 use taffy::NodeId;
 
-use crate::components::{BreakType, Component, Document, HyphenationLang, Page};
+use crate::components::{BreakType, Component, Document, DocumentSection, HyphenationLang, Page};
 use crate::fonts::embed::{embed_cid_font, embed_standard_font};
 use crate::fonts::{measure_wrapped_text, FontKey, FontSystem};
 use crate::standard_fonts;
@@ -91,13 +92,33 @@ pub fn render_document(doc: &Document) -> Result<Vec<u8>, RenderError> {
     let catalog_id = writer.reserve_id();
     let pages_id = writer.reserve_id();
 
-    // Flatten pages (handling page breaks for wrap=true pages)
+    // Build ordered sections (backward compatible: fall back to doc.pages)
+    let ordered_sections: Vec<DocumentSection> = if doc.sections.is_empty() {
+        doc.pages
+            .iter()
+            .cloned()
+            .map(DocumentSection::Page)
+            .collect()
+    } else {
+        doc.sections.clone()
+    };
+
+    // Flatten generated pages (handling page breaks for wrap=true pages)
     let mut pages_to_render: Vec<Page> = Vec::new();
-    for page in &doc.pages {
-        if page.wrap {
-            pages_to_render.extend(split_page_at_breaks(page));
-        } else {
-            pages_to_render.push(page.clone());
+    let mut generated_counts_per_section = Vec::with_capacity(ordered_sections.len());
+    for section in &ordered_sections {
+        match section {
+            DocumentSection::Page(page) => {
+                if page.wrap {
+                    let split = split_page_at_breaks(page);
+                    generated_counts_per_section.push(split.len());
+                    pages_to_render.extend(split);
+                } else {
+                    generated_counts_per_section.push(1);
+                    pages_to_render.push(page.clone());
+                }
+            }
+            DocumentSection::ImportPdf(_) => generated_counts_per_section.push(0),
         }
     }
 
@@ -173,7 +194,16 @@ pub fn render_document(doc: &Document) -> Result<Vec<u8>, RenderError> {
     };
 
     // Finalize PDF
-    Ok(writer.finish(catalog_id, info_ref))
+    let rendered = writer.finish(catalog_id, info_ref);
+
+    if !ordered_sections
+        .iter()
+        .any(|section| matches!(section, DocumentSection::ImportPdf(_)))
+    {
+        return Ok(rendered);
+    }
+
+    imported_pdf::merge_document_flow(&rendered, &ordered_sections, &generated_counts_per_section)
 }
 
 /// Collected image to be embedded

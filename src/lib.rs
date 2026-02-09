@@ -51,7 +51,7 @@
 //! "#;
 //!
 //! let pdf_bytes = render_xml(xml)?;
-//! std::fs::write("hello.pdf", pdf_bytes)?;
+//! let _ = std::fs::write("hello.pdf", pdf_bytes);
 //! # Ok::<(), flexpdf::Error>(())
 //! ```
 //!
@@ -74,7 +74,7 @@
 //!     .build();
 //!
 //! let pdf_bytes = render_document(&doc)?;
-//! std::fs::write("hello.pdf", pdf_bytes)?;
+//! let _ = std::fs::write("hello.pdf", pdf_bytes);
 //! # Ok::<(), flexpdf::Error>(())
 //! ```
 
@@ -96,8 +96,9 @@ pub use builder::{
     DocumentBuilder, ImageBuilder, LinkBuilder, NoteBuilder, PageBuilder, TextBuilder, ViewBuilder,
 };
 pub use components::{
-    BreakType, Component, Document, FontDefinition, FontSource, HyphenationLang, Image, Link, Note,
-    ObjectFit, Orientation, Page, PageSize, Text, TextSpan, View,
+    BreakType, Component, Document, DocumentSection, FontDefinition, FontSource, HyphenationLang,
+    Image, ImportedPdfPages, Link, Note, ObjectFit, Orientation, Page, PageSize, Text, TextSpan,
+    View,
 };
 pub use render::RenderError;
 pub use style::{Color, Style};

@@ -1562,6 +1562,7 @@ pub fn measure_wrapped_text(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hyphenation::Hyphenator;
 
     #[test]
     fn hyphenation_dictionaries_load() {

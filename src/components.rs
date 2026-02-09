@@ -23,6 +23,42 @@ pub struct FontDefinition {
     pub source: FontSource,
 }
 
+/// A selection of pages to import from an existing PDF file.
+#[derive(Debug, Clone, Default)]
+pub struct ImportedPdfPages {
+    /// Source PDF path
+    pub src: String,
+    /// Source PDF bytes for in-memory imports
+    pub bytes: Option<Vec<u8>>,
+    /// 1-based page numbers to include, in output order
+    pub pages: Vec<u32>,
+}
+
+impl ImportedPdfPages {
+    pub fn new(src: impl Into<String>, pages: impl IntoIterator<Item = u32>) -> Self {
+        Self {
+            src: src.into(),
+            bytes: None,
+            pages: pages.into_iter().collect(),
+        }
+    }
+
+    pub fn from_bytes(bytes: impl Into<Vec<u8>>, pages: impl IntoIterator<Item = u32>) -> Self {
+        Self {
+            src: String::new(),
+            bytes: Some(bytes.into()),
+            pages: pages.into_iter().collect(),
+        }
+    }
+}
+
+/// A document section in output order.
+#[derive(Debug, Clone)]
+pub enum DocumentSection {
+    Page(Page),
+    ImportPdf(ImportedPdfPages),
+}
+
 /// Root document container.
 ///
 /// Add pages to `pages` and optionally set metadata like `title`.
@@ -34,6 +70,9 @@ pub struct Document {
     pub keywords: Option<String>,
     pub page_mode: Option<String>,
     pub fonts: Vec<FontDefinition>,
+    /// Ordered output flow (pages and imported PDF sections)
+    pub sections: Vec<DocumentSection>,
+    /// Backwards-compatible collection of generated pages
     pub pages: Vec<Page>,
 }
 
@@ -45,13 +84,31 @@ impl Document {
 
     /// Append a page to the document.
     pub fn push_page(&mut self, page: Page) {
+        self.sections.push(DocumentSection::Page(page.clone()));
         self.pages.push(page);
     }
 
     /// Append a page and return the document for chaining.
     pub fn with_page(mut self, page: Page) -> Self {
-        self.pages.push(page);
+        self.push_page(page);
         self
+    }
+
+    /// Append an imported PDF section at the current position.
+    pub fn push_import_pdf(&mut self, import: ImportedPdfPages) {
+        self.sections.push(DocumentSection::ImportPdf(import));
+    }
+
+    /// Append an in-memory imported PDF section at the current position.
+    pub fn push_import_pdf_bytes(
+        &mut self,
+        bytes: impl Into<Vec<u8>>,
+        pages: impl IntoIterator<Item = u32>,
+    ) {
+        self.sections
+            .push(DocumentSection::ImportPdf(ImportedPdfPages::from_bytes(
+                bytes, pages,
+            )));
     }
 }
 

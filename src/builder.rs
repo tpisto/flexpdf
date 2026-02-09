@@ -1,8 +1,8 @@
 //! Fluent builders for creating documents without XML.
 
 use crate::components::{
-    BreakType, Component, Document, FontDefinition, HyphenationLang, Image, Link, Note, ObjectFit,
-    Orientation, Page, PageSize, Text, TextSpan, View,
+    BreakType, Component, Document, FontDefinition, HyphenationLang, Image, ImportedPdfPages, Link,
+    Note, ObjectFit, Orientation, Page, PageSize, Text, TextSpan, View,
 };
 use crate::style::Style;
 
@@ -83,13 +83,31 @@ impl DocumentBuilder {
         self
     }
 
+    pub fn import_pdf_pages(
+        mut self,
+        src: impl Into<String>,
+        pages: impl IntoIterator<Item = u32>,
+    ) -> Self {
+        self.doc.push_import_pdf(ImportedPdfPages::new(src, pages));
+        self
+    }
+
+    pub fn import_pdf_bytes_pages(
+        mut self,
+        bytes: impl Into<Vec<u8>>,
+        pages: impl IntoIterator<Item = u32>,
+    ) -> Self {
+        self.doc.push_import_pdf(ImportedPdfPages::from_bytes(bytes, pages));
+        self
+    }
+
     pub fn push_font(&mut self, font: FontDefinition) -> &mut Self {
         self.doc.fonts.push(font);
         self
     }
 
     pub fn page(mut self, page: impl Into<Page>) -> Self {
-        self.doc.pages.push(page.into());
+        self.doc.push_page(page.into());
         self
     }
 
@@ -98,7 +116,7 @@ impl DocumentBuilder {
         F: FnOnce(PageBuilder) -> PageBuilder,
     {
         let page = build(PageBuilder::new(size)).build();
-        self.doc.pages.push(page);
+        self.doc.push_page(page);
         self
     }
 
@@ -107,12 +125,14 @@ impl DocumentBuilder {
         I: IntoIterator<Item = P>,
         P: Into<Page>,
     {
-        self.doc.pages.extend(pages.into_iter().map(Into::into));
+        for page in pages {
+            self.doc.push_page(page.into());
+        }
         self
     }
 
     pub fn push_page(&mut self, page: impl Into<Page>) -> &mut Self {
-        self.doc.pages.push(page.into());
+        self.doc.push_page(page.into());
         self
     }
 

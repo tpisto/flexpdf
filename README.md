@@ -102,6 +102,45 @@ std::fs::write("hello.pdf", pdf_bytes)?;
 # Ok::<(), flexpdf::Error>(())
 ```
 
+## Import existing PDF pages
+
+You can include imported pages anywhere in the document flow:
+
+```rust
+use flexpdf::builder::{document, text, view};
+use flexpdf::{render_document, PageSize};
+
+let input_bytes = std::fs::read("input.pdf")?;
+
+let doc = document()
+    .page_with(PageSize::A4, |page| page.child(view().child(text("Dynamic A"))))
+    .import_pdf_bytes_pages(input_bytes, [1, 2])
+    .page_with(PageSize::A4, |page| page.child(view().child(text("Dynamic B"))))
+    .import_pdf_pages("appendix.pdf", [1])
+    .page_with(PageSize::A4, |page| page.child(view().child(text("Dynamic C"))))
+    .build();
+
+let pdf_bytes = render_document(&doc)?;
+std::fs::write("output.pdf", pdf_bytes)?;
+# Ok::<(), flexpdf::Error>(())
+```
+
+XML supports the same flow with `<ImportPdf />` as a sibling of `<Page>`:
+
+```xml
+<Document>
+  <Page size="A4"><Text>Dynamic A</Text></Page>
+  <ImportPdf src="input.pdf" pages="1,2" />
+  <Page size="A4"><Text>Dynamic B</Text></Page>
+  <ImportPdf src="appendix.pdf" pages="1-2,4" />
+  <Page size="A4"><Text>Dynamic C</Text></Page>
+</Document>
+```
+
+`pages` accepts comma-separated page numbers and ranges (`1,3-5`).
+Use `import_pdf_pages(path, pages)` for file paths and `import_pdf_bytes_pages(bytes, pages)` for in-memory Rust `Vec<u8>` data.
+Native import supports both classic xref-table PDFs and xref-stream/object-stream PDFs.
+
 ## Library entry points
 
 - `render_xml(xml: &str) -> Result<Vec<u8>, Error>`
