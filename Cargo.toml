@@ -1,6 +1,6 @@
 [package]
 name = "flexpdf"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "PDF generation from XML or Rust structures with flexbox layout"
 license = "MIT OR Apache-2.0"
@@ -25,7 +25,7 @@ thiserror = "1.0"
 parley = "0.7"
 skrifa = "0.39.0"
 read-fonts = "0.36.0"
-reqwest = { version = "0.12", features = ["blocking"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking"] }
 log = "0.4"
 regex = "1.10"
 dirs = "5.0"
@@ -36,4 +36,7 @@ unicode-normalization = "0.1"
 hyphenation = { version = "0.8.4", features = ["embed_all"] }
 
 [features]
+default = ["tls-native"]
 curl = []
+tls-native = ["reqwest/default-tls"]
+tls-rustls = ["reqwest/rustls-tls"]

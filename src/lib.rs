@@ -78,6 +78,11 @@
 //! # Ok::<(), flexpdf::Error>(())
 //! ```
 
+#[cfg(all(feature = "tls-native", feature = "tls-rustls"))]
+compile_error!(
+    "Features `tls-native` and `tls-rustls` are mutually exclusive; enable only one TLS backend."
+);
+
 pub mod components;
 pub mod builder;
 pub mod fonts;

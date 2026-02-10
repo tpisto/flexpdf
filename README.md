@@ -18,6 +18,28 @@ flexpdf is a Rust library that renders a small, React-PDF-like XML syntax (or a 
 flexpdf = { path = "./flexpdf" }
 ```
 
+## TLS backend selection
+
+By default, flexpdf uses reqwest with native TLS:
+
+```toml
+[dependencies]
+flexpdf = "0.1.2"
+```
+
+To use rustls instead:
+
+```toml
+[dependencies]
+flexpdf = { version = "0.1.2", default-features = false, features = ["tls-rustls"] }
+```
+
+Available TLS features:
+- `tls-native` (default) -> enables `reqwest/default-tls`
+- `tls-rustls` -> enables `reqwest/rustls-tls`
+
+`tls-native` and `tls-rustls` are mutually exclusive.
+
 ## Powered by
 
 - [Taffy](https://github.com/DioxusLabs/taffy) for flexbox layout.
