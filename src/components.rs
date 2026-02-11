@@ -199,15 +199,15 @@ pub enum BreakType {
 
 impl BreakType {
     pub fn from_str(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
-            "page" => BreakType::Page,
+        match s.trim().to_lowercase().as_str() {
+            "page" | "true" | "1" => BreakType::Page,
             _ => BreakType::None,
         }
     }
 }
 
 /// A single page in the document.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Page {
     pub size: PageSize,
     pub orientation: Orientation,
@@ -217,6 +217,20 @@ pub struct Page {
     pub wrap: bool,
     /// Optional hyphenation language for this page
     pub hyphenation: Option<HyphenationLang>,
+}
+
+impl Default for Page {
+    fn default() -> Self {
+        Self {
+            size: PageSize::default(),
+            orientation: Orientation::default(),
+            style: Style::default(),
+            children: Vec::new(),
+            // Match react-pdf default: pages wrap unless explicitly disabled.
+            wrap: true,
+            hyphenation: None,
+        }
+    }
 }
 
 impl Page {
@@ -256,6 +270,10 @@ pub struct View {
     pub break_before: BreakType,
     pub id: Option<String>,
     pub fixed: bool,
+    /// Whether this element can be split between pages (default: true)
+    pub wrap: Option<bool>,
+    /// Desired minimum remaining presence (in points) after this element.
+    pub min_presence_ahead: f32,
 }
 
 impl View {
@@ -301,7 +319,7 @@ impl Default for TextSpan {
 /// Text content.
 ///
 /// Use `content` for plain text or `spans` for mixed styling.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Text {
     /// Plain text content (used when no spans)
     pub content: String,
@@ -311,6 +329,36 @@ pub struct Text {
     pub style: Style,
     /// Bookmark title (used for outlines)
     pub bookmark: Option<String>,
+    /// Whether to break before this element
+    pub break_before: BreakType,
+    /// Whether this element is rendered on all pages (react-pdf `fixed`)
+    pub fixed: bool,
+    /// Whether this element can be split between pages (default: true)
+    pub wrap: Option<bool>,
+    /// Desired minimum remaining presence (in points) after this element.
+    pub min_presence_ahead: f32,
+    /// Minimum number of lines kept at the start of a split text node.
+    pub orphans: usize,
+    /// Minimum number of lines kept at the end of a split text node.
+    pub widows: usize,
+}
+
+impl Default for Text {
+    fn default() -> Self {
+        Self {
+            content: String::new(),
+            spans: Vec::new(),
+            style: Style::default(),
+            bookmark: None,
+            break_before: BreakType::None,
+            fixed: false,
+            wrap: None,
+            min_presence_ahead: 0.0,
+            // Match react-pdf defaults.
+            orphans: 2,
+            widows: 2,
+        }
+    }
 }
 
 impl Text {
@@ -375,6 +423,14 @@ pub struct Image {
     pub object_fit: ObjectFit,
     /// Style (width, height, borders, etc.)
     pub style: Style,
+    /// Whether to break before this element
+    pub break_before: BreakType,
+    /// Whether this element is rendered on all pages (react-pdf `fixed`)
+    pub fixed: bool,
+    /// Whether this element can be split between pages (ignored for images; always false)
+    pub wrap: Option<bool>,
+    /// Desired minimum remaining presence (in points) after this element.
+    pub min_presence_ahead: f32,
 }
 
 impl Image {
@@ -399,6 +455,14 @@ pub struct Link {
     pub src: String,
     pub style: Style,
     pub children: Vec<Component>,
+    /// Whether to break before this element
+    pub break_before: BreakType,
+    /// Whether this element is rendered on all pages (react-pdf `fixed`)
+    pub fixed: bool,
+    /// Whether this element can be split between pages (default: true)
+    pub wrap: Option<bool>,
+    /// Desired minimum remaining presence (in points) after this element.
+    pub min_presence_ahead: f32,
 }
 
 impl Link {
@@ -433,6 +497,14 @@ impl Link {
 pub struct Note {
     pub content: String,
     pub style: Style,
+    /// Whether to break before this element
+    pub break_before: BreakType,
+    /// Whether this element is rendered on all pages (react-pdf `fixed`)
+    pub fixed: bool,
+    /// Whether this element can be split between pages (ignored for notes; always false)
+    pub wrap: Option<bool>,
+    /// Desired minimum remaining presence (in points) after this element.
+    pub min_presence_ahead: f32,
 }
 
 impl Note {

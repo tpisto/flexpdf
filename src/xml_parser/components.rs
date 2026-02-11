@@ -16,6 +16,23 @@ use super::error::ParseError;
 use super::text::{normalize_whitespace, parse_text};
 use super::util::skip_element;
 
+fn parse_bool_attr(value: &str) -> Result<bool, ParseError> {
+    match value.trim().to_lowercase().as_str() {
+        "true" | "1" => Ok(true),
+        "false" | "0" | "" => Ok(false),
+        other => Err(ParseError::AttrError(format!(
+            "Invalid boolean value '{}'",
+            other
+        ))),
+    }
+}
+
+fn parse_f32_attr(key: &str, value: &str) -> Result<f32, ParseError> {
+    value.trim().parse::<f32>().map_err(|_| {
+        ParseError::AttrError(format!("Invalid {} value '{}'", key, value))
+    })
+}
+
 pub(super) fn parse_component(
     reader: &mut Reader<&[u8]>,
     start: &BytesStart,
@@ -72,7 +89,11 @@ fn parse_empty_view(start: &BytesStart) -> Result<View, ParseError> {
             "style" => view.style = parse_style(&value),
             "break" => view.break_before = BreakType::from_str(&value),
             "id" => view.id = Some(value),
-            "fixed" => view.fixed = value.to_lowercase() == "true",
+            "fixed" => view.fixed = parse_bool_attr(&value)?,
+            "wrap" => view.wrap = Some(parse_bool_attr(&value)?),
+            "minPresenceAhead" => {
+                view.min_presence_ahead = parse_f32_attr(key, &value)?.max(0.0);
+            }
             _ => {}
         }
     }
@@ -102,6 +123,12 @@ fn parse_image(start: &BytesStart) -> Result<Image, ParseError> {
                 }
             }
             "objectFit" => image.object_fit = ObjectFit::from_str(&value),
+            "break" => image.break_before = BreakType::from_str(&value),
+            "fixed" => image.fixed = parse_bool_attr(&value)?,
+            "wrap" => image.wrap = Some(parse_bool_attr(&value)?),
+            "minPresenceAhead" => {
+                image.min_presence_ahead = parse_f32_attr(key, &value)?.max(0.0);
+            }
             _ => {}
         }
     }
@@ -125,7 +152,11 @@ fn parse_view(reader: &mut Reader<&[u8]>, start: &BytesStart) -> Result<View, Pa
             "style" => view.style = parse_style(&value),
             "break" => view.break_before = BreakType::from_str(&value),
             "id" => view.id = Some(value),
-            "fixed" => view.fixed = value.to_lowercase() == "true",
+            "fixed" => view.fixed = parse_bool_attr(&value)?,
+            "wrap" => view.wrap = Some(parse_bool_attr(&value)?),
+            "minPresenceAhead" => {
+                view.min_presence_ahead = parse_f32_attr(key, &value)?.max(0.0);
+            }
             _ => {}
         }
     }
@@ -171,6 +202,12 @@ fn parse_link(reader: &mut Reader<&[u8]>, start: &BytesStart) -> Result<Link, Pa
         match key {
             "src" => link.src = value,
             "style" => link.style = parse_style(&value),
+            "break" => link.break_before = BreakType::from_str(&value),
+            "fixed" => link.fixed = parse_bool_attr(&value)?,
+            "wrap" => link.wrap = Some(parse_bool_attr(&value)?),
+            "minPresenceAhead" => {
+                link.min_presence_ahead = parse_f32_attr(key, &value)?.max(0.0);
+            }
             _ => {}
         }
     }
@@ -212,8 +249,15 @@ fn parse_note(reader: &mut Reader<&[u8]>, start: &BytesStart) -> Result<Note, Pa
             .map_err(|e| ParseError::XmlError(e))?
             .into_owned();
 
-        if key == "style" {
-            note.style = parse_style(&value);
+        match key {
+            "style" => note.style = parse_style(&value),
+            "break" => note.break_before = BreakType::from_str(&value),
+            "fixed" => note.fixed = parse_bool_attr(&value)?,
+            "wrap" => note.wrap = Some(parse_bool_attr(&value)?),
+            "minPresenceAhead" => {
+                note.min_presence_ahead = parse_f32_attr(key, &value)?.max(0.0);
+            }
+            _ => {}
         }
     }
 
@@ -255,8 +299,15 @@ fn parse_note_empty(start: &BytesStart) -> Result<Note, ParseError> {
             .map_err(|e| ParseError::XmlError(e))?
             .into_owned();
 
-        if key == "style" {
-            note.style = parse_style(&value);
+        match key {
+            "style" => note.style = parse_style(&value),
+            "break" => note.break_before = BreakType::from_str(&value),
+            "fixed" => note.fixed = parse_bool_attr(&value)?,
+            "wrap" => note.wrap = Some(parse_bool_attr(&value)?),
+            "minPresenceAhead" => {
+                note.min_presence_ahead = parse_f32_attr(key, &value)?.max(0.0);
+            }
+            _ => {}
         }
     }
 

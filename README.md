@@ -24,14 +24,14 @@ By default, flexpdf uses reqwest with native TLS:
 
 ```toml
 [dependencies]
-flexpdf = "0.1.3"
+flexpdf = "0.1.4"
 ```
 
 To use rustls instead:
 
 ```toml
 [dependencies]
-flexpdf = { version = "0.1.3", default-features = false, features = ["tls-rustls"] }
+flexpdf = { version = "0.1.4", default-features = false, features = ["tls-rustls"] }
 ```
 
 Available TLS features:

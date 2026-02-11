@@ -3,12 +3,13 @@
 mod borders;
 mod image;
 mod imported_pdf;
+mod pagination;
 mod text;
 
 use std::collections::{HashMap, HashSet};
 use taffy::NodeId;
 
-use crate::components::{BreakType, Component, Document, DocumentSection, HyphenationLang, Page};
+use crate::components::{Component, Document, DocumentSection, HyphenationLang, Page};
 use crate::fonts::embed::{embed_cid_font, embed_standard_font};
 use crate::fonts::{measure_wrapped_text, FontKey, FontSystem};
 use crate::standard_fonts;
@@ -28,57 +29,8 @@ use crate::style::{
 };
 use borders::render_view_borders;
 use image::render_image;
+use pagination::paginate_page;
 use text::{render_text, render_text_with_spans, resolve_placeholders};
-
-/// Split a page at break points, returning multiple page segments
-fn split_page_at_breaks(page: &Page) -> Vec<Page> {
-    if page.children.is_empty() {
-        return vec![page.clone()];
-    }
-
-    // Only apply manual breaks at the Page's direct children (React-PDF behavior).
-    let mut segments: Vec<Vec<Component>> = Vec::new();
-    let mut current_segment: Vec<Component> = Vec::new();
-
-    for child in &page.children {
-        let has_break = match child {
-            Component::View(v) => v.break_before == BreakType::Page,
-            _ => false,
-        };
-
-        if has_break && !current_segment.is_empty() {
-            segments.push(current_segment);
-            current_segment = Vec::new();
-            let mut next_child = child.clone();
-            if let Component::View(ref mut v) = next_child {
-                v.break_before = BreakType::None;
-            }
-            current_segment.push(next_child);
-        } else {
-            current_segment.push(child.clone());
-        }
-    }
-
-    if !current_segment.is_empty() {
-        segments.push(current_segment);
-    }
-
-    if segments.len() <= 1 {
-        return vec![page.clone()];
-    }
-
-    segments
-        .into_iter()
-        .map(|children| Page {
-            size: page.size,
-            orientation: page.orientation,
-            style: page.style.clone(),
-            children,
-            wrap: false,
-            hyphenation: page.hyphenation,
-        })
-        .collect()
-}
 
 /// Render a document to PDF bytes
 pub fn render_document(doc: &Document) -> Result<Vec<u8>, RenderError> {
@@ -110,7 +62,7 @@ pub fn render_document(doc: &Document) -> Result<Vec<u8>, RenderError> {
         match section {
             DocumentSection::Page(page) => {
                 if page.wrap {
-                    let split = split_page_at_breaks(page);
+                    let split = paginate_page(page, &font_system)?;
                     generated_counts_per_section.push(split.len());
                     pages_to_render.extend(split);
                 } else {

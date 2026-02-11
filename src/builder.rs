@@ -231,6 +231,16 @@ impl ViewBuilder {
         self
     }
 
+    pub fn wrap(mut self, wrap: bool) -> Self {
+        self.view.wrap = Some(wrap);
+        self
+    }
+
+    pub fn min_presence_ahead(mut self, value: f32) -> Self {
+        self.view.min_presence_ahead = value;
+        self
+    }
+
     pub fn child(mut self, child: impl Into<Component>) -> Self {
         self.view.children.push(child.into());
         self
@@ -276,6 +286,36 @@ impl TextBuilder {
 
     pub fn bookmark(mut self, bookmark: impl Into<String>) -> Self {
         self.text.bookmark = Some(bookmark.into());
+        self
+    }
+
+    pub fn break_before(mut self, break_before: BreakType) -> Self {
+        self.text.break_before = break_before;
+        self
+    }
+
+    pub fn fixed(mut self, fixed: bool) -> Self {
+        self.text.fixed = fixed;
+        self
+    }
+
+    pub fn wrap(mut self, wrap: bool) -> Self {
+        self.text.wrap = Some(wrap);
+        self
+    }
+
+    pub fn min_presence_ahead(mut self, value: f32) -> Self {
+        self.text.min_presence_ahead = value;
+        self
+    }
+
+    pub fn orphans(mut self, value: usize) -> Self {
+        self.text.orphans = value;
+        self
+    }
+
+    pub fn widows(mut self, value: usize) -> Self {
+        self.text.widows = value;
         self
     }
 
@@ -334,6 +374,26 @@ impl ImageBuilder {
         self
     }
 
+    pub fn break_before(mut self, break_before: BreakType) -> Self {
+        self.image.break_before = break_before;
+        self
+    }
+
+    pub fn fixed(mut self, fixed: bool) -> Self {
+        self.image.fixed = fixed;
+        self
+    }
+
+    pub fn wrap(mut self, wrap: bool) -> Self {
+        self.image.wrap = Some(wrap);
+        self
+    }
+
+    pub fn min_presence_ahead(mut self, value: f32) -> Self {
+        self.image.min_presence_ahead = value;
+        self
+    }
+
     pub fn build(self) -> Image {
         self.image
     }
@@ -353,6 +413,26 @@ impl LinkBuilder {
 
     pub fn style(mut self, style: Style) -> Self {
         self.link.style = style;
+        self
+    }
+
+    pub fn break_before(mut self, break_before: BreakType) -> Self {
+        self.link.break_before = break_before;
+        self
+    }
+
+    pub fn fixed(mut self, fixed: bool) -> Self {
+        self.link.fixed = fixed;
+        self
+    }
+
+    pub fn wrap(mut self, wrap: bool) -> Self {
+        self.link.wrap = Some(wrap);
+        self
+    }
+
+    pub fn min_presence_ahead(mut self, value: f32) -> Self {
+        self.link.min_presence_ahead = value;
         self
     }
 
@@ -396,6 +476,26 @@ impl NoteBuilder {
 
     pub fn style(mut self, style: Style) -> Self {
         self.note.style = style;
+        self
+    }
+
+    pub fn break_before(mut self, break_before: BreakType) -> Self {
+        self.note.break_before = break_before;
+        self
+    }
+
+    pub fn fixed(mut self, fixed: bool) -> Self {
+        self.note.fixed = fixed;
+        self
+    }
+
+    pub fn wrap(mut self, wrap: bool) -> Self {
+        self.note.wrap = Some(wrap);
+        self
+    }
+
+    pub fn min_presence_ahead(mut self, value: f32) -> Self {
+        self.note.min_presence_ahead = value;
         self
     }
 

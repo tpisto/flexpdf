@@ -1,11 +1,34 @@
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 
-use crate::components::{Text, TextSpan};
+use crate::components::{BreakType, Text, TextSpan};
 use crate::style::parse_style;
 
 use super::error::ParseError;
 use super::util::skip_element;
+
+fn parse_bool_attr(value: &str) -> Result<bool, ParseError> {
+    match value.trim().to_lowercase().as_str() {
+        "true" | "1" => Ok(true),
+        "false" | "0" | "" => Ok(false),
+        other => Err(ParseError::AttrError(format!(
+            "Invalid boolean value '{}'",
+            other
+        ))),
+    }
+}
+
+fn parse_f32_attr(key: &str, value: &str) -> Result<f32, ParseError> {
+    value.trim().parse::<f32>().map_err(|_| {
+        ParseError::AttrError(format!("Invalid {} value '{}'", key, value))
+    })
+}
+
+fn parse_usize_attr(key: &str, value: &str) -> Result<usize, ParseError> {
+    value.trim().parse::<usize>().map_err(|_| {
+        ParseError::AttrError(format!("Invalid {} value '{}'", key, value))
+    })
+}
 
 pub(super) fn parse_text(
     reader: &mut Reader<&[u8]>,
@@ -22,10 +45,18 @@ pub(super) fn parse_text(
             .map_err(|e| ParseError::XmlError(e))?
             .into_owned();
 
-        if key == "style" {
-            text.style = parse_style(&value);
-        } else if key == "bookmark" {
-            text.bookmark = Some(value);
+        match key {
+            "style" => text.style = parse_style(&value),
+            "bookmark" => text.bookmark = Some(value),
+            "break" => text.break_before = BreakType::from_str(&value),
+            "fixed" => text.fixed = parse_bool_attr(&value)?,
+            "wrap" => text.wrap = Some(parse_bool_attr(&value)?),
+            "minPresenceAhead" => {
+                text.min_presence_ahead = parse_f32_attr(key, &value)?.max(0.0);
+            }
+            "orphans" => text.orphans = parse_usize_attr(key, &value)?,
+            "widows" => text.widows = parse_usize_attr(key, &value)?,
+            _ => {}
         }
     }
 

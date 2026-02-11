@@ -267,7 +267,9 @@ fn parse_page(reader: &mut Reader<&[u8]>, start: &BytesStart) -> Result<Page, Pa
             "size" => page.size = PageSize::from_str(&value),
             "orientation" => page.orientation = Orientation::from_str(&value),
             "style" => page.style = parse_style(&value),
-            "wrap" => page.wrap = value.to_lowercase() == "true",
+            "wrap" => {
+                page.wrap = matches!(value.trim().to_lowercase().as_str(), "true" | "1");
+            }
             "hyphenation" => page.hyphenation = HyphenationLang::from_str(&value),
             _ => {}
         }
