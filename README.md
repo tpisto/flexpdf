@@ -1,3 +1,5 @@
+<img height="100" alt="flexpdf-logo2" src="https://github.com/user-attachments/assets/e7cc09af-8166-4c7a-8e21-3431c5e66c37" />
+
 # flexpdf
 
 flexpdf is a Rust library that renders a small, React-PDF-like XML syntax (or a Rust document model) into a PDF byte buffer. It aims for compatibility with [react-pdf](https://github.com/diegomura/react-pdf) layouts and styling. It is built on a flexbox layout engine and is designed to be easy to embed into other Rust programs.
