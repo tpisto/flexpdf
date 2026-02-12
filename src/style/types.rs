@@ -301,6 +301,10 @@ impl Color {
     }
 
     pub fn from_hex(hex: &str) -> Option<Self> {
+        // Try named CSS colors first.
+        if let Some(c) = Self::from_named(hex) {
+            return Some(c);
+        }
         let hex = hex.trim_start_matches('#');
         if hex.len() == 6 {
             let r = u8::from_str_radix(&hex[0..2], 16).ok()? as f32 / 255.0;
@@ -315,6 +319,59 @@ impl Color {
         } else {
             None
         }
+    }
+
+    fn from_named(name: &str) -> Option<Self> {
+        let (r, g, b) = match name.to_ascii_lowercase().as_str() {
+            "black" => (0, 0, 0),
+            "white" => (255, 255, 255),
+            "red" => (255, 0, 0),
+            "green" => (0, 128, 0),
+            "blue" => (0, 0, 255),
+            "yellow" => (255, 255, 0),
+            "cyan" | "aqua" => (0, 255, 255),
+            "magenta" | "fuchsia" => (255, 0, 255),
+            "gray" | "grey" => (128, 128, 128),
+            "silver" => (192, 192, 192),
+            "maroon" => (128, 0, 0),
+            "olive" => (128, 128, 0),
+            "lime" => (0, 255, 0),
+            "teal" => (0, 128, 128),
+            "navy" => (0, 0, 128),
+            "purple" => (128, 0, 128),
+            "orange" => (255, 165, 0),
+            "pink" => (255, 192, 203),
+            "brown" => (165, 42, 42),
+            "coral" => (255, 127, 80),
+            "crimson" => (220, 20, 60),
+            "darkblue" => (0, 0, 139),
+            "darkgreen" => (0, 100, 0),
+            "darkgray" | "darkgrey" => (169, 169, 169),
+            "darkred" => (139, 0, 0),
+            "gold" => (255, 215, 0),
+            "indigo" => (75, 0, 130),
+            "ivory" => (255, 255, 240),
+            "khaki" => (240, 230, 140),
+            "lavender" => (230, 230, 250),
+            "lightblue" => (173, 216, 230),
+            "lightgray" | "lightgrey" => (211, 211, 211),
+            "lightgreen" => (144, 238, 144),
+            "lightyellow" => (255, 255, 224),
+            "orangered" => (255, 69, 0),
+            "orchid" => (218, 112, 214),
+            "salmon" => (250, 128, 114),
+            "skyblue" => (135, 206, 235),
+            "slategray" | "slategrey" => (112, 128, 144),
+            "steelblue" => (70, 130, 180),
+            "tan" => (210, 180, 140),
+            "tomato" => (255, 99, 71),
+            "turquoise" => (64, 224, 208),
+            "violet" => (238, 130, 238),
+            "wheat" => (245, 222, 179),
+            "transparent" => return Some(Self::new(0.0, 0.0, 0.0)),
+            _ => return None,
+        };
+        Some(Self::new(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0))
     }
 }
 

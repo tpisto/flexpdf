@@ -987,6 +987,9 @@ fn render_node_tree(
             }
             ComponentType::Text => {
                 if let Some(ComponentRef::Text(text, spans, style, _)) = components.get(&node) {
+                    // Render background/borders first (like View/Image/Link)
+                    render_view_borders(content, layout, style, page_height);
+
                     let text_layout = layout.content_rect();
                     let font_size = style.font_size.unwrap_or(12.0);
                     let font_weight = style.font_weight.unwrap_or(400);
