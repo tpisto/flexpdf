@@ -78,6 +78,11 @@ impl DocumentBuilder {
         self
     }
 
+    pub fn hyphenation(mut self, lang: HyphenationLang) -> Self {
+        self.doc.hyphenation = Some(lang);
+        self
+    }
+
     pub fn font(mut self, font: FontDefinition) -> Self {
         self.doc.fonts.push(font);
         self
@@ -169,7 +174,12 @@ impl PageBuilder {
     }
 
     pub fn hyphenation(mut self, lang: HyphenationLang) -> Self {
-        self.page.hyphenation = Some(lang);
+        self.page.hyphenation_config = crate::components::HyphenationConfig::Language(lang);
+        self
+    }
+
+    pub fn no_hyphenation(mut self) -> Self {
+        self.page.hyphenation_config = crate::components::HyphenationConfig::Disabled;
         self
     }
 

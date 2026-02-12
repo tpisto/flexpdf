@@ -69,6 +69,8 @@ pub struct Document {
     pub subject: Option<String>,
     pub keywords: Option<String>,
     pub page_mode: Option<String>,
+    /// Default hyphenation language for all pages (can be overridden per-page).
+    pub hyphenation: Option<HyphenationLang>,
     pub fonts: Vec<FontDefinition>,
     /// Ordered output flow (pages and imported PDF sections)
     pub sections: Vec<DocumentSection>,
@@ -188,6 +190,43 @@ impl HyphenationLang {
     }
 }
 
+/// Per-page hyphenation setting.
+///
+/// - `Inherit` — not specified, inherit from Document's `hyphenation`.
+/// - `Disabled` — explicitly turned off (`hyphenation="none"`).
+/// - `Language(lang)` — explicit language override.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum HyphenationConfig {
+    #[default]
+    Inherit,
+    Disabled,
+    Language(HyphenationLang),
+}
+
+impl HyphenationConfig {
+    /// Parse from an XML attribute value.
+    ///
+    /// `"none"` / `"false"` / `""` → Disabled, language code → Language, unknown → Inherit.
+    pub fn from_str(value: &str) -> Self {
+        match value.trim().to_lowercase().as_str() {
+            "" | "none" | "false" | "off" | "0" => HyphenationConfig::Disabled,
+            other => match HyphenationLang::from_str(other) {
+                Some(lang) => HyphenationConfig::Language(lang),
+                None => HyphenationConfig::Inherit,
+            },
+        }
+    }
+
+    /// Resolve against a document-level default.
+    pub fn resolve(self, doc_default: Option<HyphenationLang>) -> Option<HyphenationLang> {
+        match self {
+            HyphenationConfig::Inherit => doc_default,
+            HyphenationConfig::Disabled => None,
+            HyphenationConfig::Language(lang) => Some(lang),
+        }
+    }
+}
+
 /// Manual page break type.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum BreakType {
@@ -215,7 +254,9 @@ pub struct Page {
     pub children: Vec<Component>,
     /// Whether content can wrap to additional pages
     pub wrap: bool,
-    /// Optional hyphenation language for this page
+    /// Hyphenation setting for this page (inherit / disabled / specific language)
+    pub hyphenation_config: HyphenationConfig,
+    /// Resolved hyphenation language (set by renderer from config + document default)
     pub hyphenation: Option<HyphenationLang>,
 }
 
@@ -228,6 +269,7 @@ impl Default for Page {
             children: Vec::new(),
             // Match react-pdf default: pages wrap unless explicitly disabled.
             wrap: true,
+            hyphenation_config: HyphenationConfig::default(),
             hyphenation: None,
         }
     }

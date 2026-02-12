@@ -101,7 +101,7 @@ pub use builder::{
     DocumentBuilder, ImageBuilder, LinkBuilder, NoteBuilder, PageBuilder, TextBuilder, ViewBuilder,
 };
 pub use components::{
-    BreakType, Component, Document, DocumentSection, FontDefinition, FontSource, HyphenationLang,
+    BreakType, Component, Document, DocumentSection, FontDefinition, FontSource, HyphenationConfig, HyphenationLang,
     Image, ImportedPdfPages, Link, Note, ObjectFit, Orientation, Page, PageSize, Text, TextSpan,
     View,
 };

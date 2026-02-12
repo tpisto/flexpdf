@@ -5,6 +5,7 @@ use crate::components::{
     Document,
     FontDefinition,
     FontSource,
+    HyphenationConfig,
     HyphenationLang,
     ImportedPdfPages,
     Orientation,
@@ -60,6 +61,7 @@ fn parse_document(reader: &mut Reader<&[u8]>, start: &BytesStart) -> Result<Docu
             "subject" => doc.subject = Some(value),
             "keywords" => doc.keywords = Some(value),
             "pageMode" => doc.page_mode = Some(value),
+            "hyphenation" => doc.hyphenation = HyphenationLang::from_str(&value),
             _ => {}
         }
     }
@@ -270,7 +272,7 @@ fn parse_page(reader: &mut Reader<&[u8]>, start: &BytesStart) -> Result<Page, Pa
             "wrap" => {
                 page.wrap = matches!(value.trim().to_lowercase().as_str(), "true" | "1");
             }
-            "hyphenation" => page.hyphenation = HyphenationLang::from_str(&value),
+            "hyphenation" => page.hyphenation_config = HyphenationConfig::from_str(&value),
             _ => {}
         }
     }

@@ -55,19 +55,24 @@ pub fn render_document(doc: &Document) -> Result<Vec<u8>, RenderError> {
         doc.sections.clone()
     };
 
+    // Resolve document-level hyphenation default.
+    let doc_hyphenation = doc.hyphenation;
+
     // Flatten generated pages (handling page breaks for wrap=true pages)
     let mut pages_to_render: Vec<Page> = Vec::new();
     let mut generated_counts_per_section = Vec::with_capacity(ordered_sections.len());
     for section in &ordered_sections {
         match section {
             DocumentSection::Page(page) => {
+                let mut page = page.clone();
+                page.hyphenation = page.hyphenation_config.resolve(doc_hyphenation);
                 if page.wrap {
-                    let split = paginate_page(page, &font_system)?;
+                    let split = paginate_page(&page, &font_system)?;
                     generated_counts_per_section.push(split.len());
                     pages_to_render.extend(split);
                 } else {
                     generated_counts_per_section.push(1);
-                    pages_to_render.push(page.clone());
+                    pages_to_render.push(page);
                 }
             }
             DocumentSection::ImportPdf(_) => generated_counts_per_section.push(0),

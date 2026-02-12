@@ -142,6 +142,7 @@ fn split_page_once(
         style: page.style.clone(),
         children: current_children,
         wrap: false,
+        hyphenation_config: page.hyphenation_config,
         hyphenation: page.hyphenation,
     };
 
@@ -155,6 +156,7 @@ fn split_page_once(
         style: page.style.clone(),
         children: next_children,
         wrap: true,
+        hyphenation_config: page.hyphenation_config,
         hyphenation: page.hyphenation,
     };
 
