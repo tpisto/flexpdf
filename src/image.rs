@@ -114,6 +114,12 @@ fn download_image_curl(url: &str) -> Result<Vec<u8>, ImageError> {
     Ok(output.stdout)
 }
 
+/// Decode raw image bytes (PNG or JPEG) into a `LoadedImage`.
+/// The format is detected from magic bytes, not from a file extension.
+pub fn decode_image_bytes(data: &[u8]) -> Result<LoadedImage, ImageError> {
+    decode_image(data)
+}
+
 /// Decode image data (PNG or JPEG)
 fn decode_image(data: &[u8]) -> Result<LoadedImage, ImageError> {
     // Check file signature to determine format

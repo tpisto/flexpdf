@@ -461,6 +461,9 @@ impl ObjectFit {
 pub struct Image {
     /// Source URL or file path
     pub src: String,
+    /// Inline image bytes (PNG or JPEG). When set, `src` is ignored for loading
+    /// but still used as a dedup key. The format is detected from magic bytes.
+    pub data: Option<Vec<u8>>,
     /// Object fit mode
     pub object_fit: ObjectFit,
     /// Style (width, height, borders, etc.)
@@ -482,6 +485,29 @@ impl Image {
             src: src.into(),
             ..Self::default()
         }
+    }
+
+    /// Create an image node from inline bytes (PNG or JPEG).
+    pub fn from_bytes(data: Vec<u8>) -> Self {
+        Self {
+            src: format!("__inline_{:x}", {
+                // Simple hash for dedup key
+                let mut h: u64 = 0xcbf29ce484222325;
+                for &b in data.iter().take(64) {
+                    h ^= b as u64;
+                    h = h.wrapping_mul(0x100000001b3);
+                }
+                h
+            }),
+            data: Some(data),
+            ..Self::default()
+        }
+    }
+
+    /// Set inline image data.
+    pub fn with_data(mut self, data: Vec<u8>) -> Self {
+        self.data = Some(data);
+        self
     }
 
     /// Set the style for the image node.

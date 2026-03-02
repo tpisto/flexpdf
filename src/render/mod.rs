@@ -167,6 +167,7 @@ pub fn render_document(doc: &Document) -> Result<Vec<u8>, RenderError> {
 struct CollectedImage {
     name: String,
     src: String,
+    data: Option<Vec<u8>>,
 }
 
 /// Embedded image info for rendering
@@ -297,7 +298,12 @@ fn render_page(
     let mut loaded_images: Vec<(String, LoadedImage)> = Vec::new();
 
     for img in &collected_images {
-        match load_image(&img.src) {
+        let result = if let Some(ref data) = img.data {
+            crate::image::decode_image_bytes(data)
+        } else {
+            load_image(&img.src)
+        };
+        match result {
             Ok(loaded) => {
                 image_info_map.insert(
                     img.src.clone(),
@@ -416,13 +422,14 @@ fn collect_images(
     images: &mut Vec<CollectedImage>,
     seen_srcs: &mut std::collections::HashSet<String>,
 ) {
-    if let Some(ComponentRef::Image(src, _, _)) = components.get(&node) {
+    if let Some(ComponentRef::Image(src, data, _, _)) = components.get(&node) {
         if !seen_srcs.contains(src) {
             seen_srcs.insert(src.clone());
             let name = format!("Im{}", images.len() + 1);
             images.push(CollectedImage {
                 name,
                 src: src.clone(),
+                data: data.clone(),
             });
         }
     }
@@ -456,7 +463,7 @@ fn embed_image(writer: &mut PdfWriter, image: &LoadedImage) -> ObjectRef {
 enum ComponentRef {
     View(Style, Option<String>),
     Text(String, Vec<crate::components::TextSpan>, Style, Option<String>),
-    Image(String, crate::components::ObjectFit, Style), // src, object_fit, style
+    Image(String, Option<Vec<u8>>, crate::components::ObjectFit, Style), // src, data, object_fit, style
     Link(String, Style),
     Note(String),
 }
@@ -465,7 +472,7 @@ fn component_style(component: &ComponentRef) -> Option<&Style> {
     match component {
         ComponentRef::View(style, _) => Some(style),
         ComponentRef::Text(_, _, style, _) => Some(style),
-        ComponentRef::Image(_, _, style) => Some(style),
+        ComponentRef::Image(_, _, _, style) => Some(style),
         ComponentRef::Link(_, style) => Some(style),
         ComponentRef::Note(_) => None,
     }
@@ -521,7 +528,7 @@ fn map_component_to_node(
         Component::Image(image) => {
             map.insert(
                 node,
-                ComponentRef::Image(image.src.clone(), image.object_fit, image.style.clone()),
+                ComponentRef::Image(image.src.clone(), image.data.clone(), image.object_fit, image.style.clone()),
             );
         }
         Component::Link(link) => {
@@ -857,7 +864,7 @@ fn debug_dump_layout(
                 let snippet: String = text.chars().take(40).collect();
                 format!("Text(\"{}\")", snippet)
             }
-            Some(ComponentRef::Image(src, _, _)) => {
+            Some(ComponentRef::Image(src, _, _, _)) => {
                 format!("Image({})", src)
             }
             Some(ComponentRef::Link(src, _)) => {
@@ -1063,7 +1070,7 @@ fn render_node_tree(
                 }
             }
             ComponentType::Image => {
-                if let Some(ComponentRef::Image(src, object_fit, style)) = components.get(&node) {
+                if let Some(ComponentRef::Image(src, _, object_fit, style)) = components.get(&node) {
                     // First render any background/border
                     render_view_borders(content, layout, style, page_height);
 

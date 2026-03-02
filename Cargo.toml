@@ -1,6 +1,6 @@
 [package]
 name = "flexpdf"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 description = "PDF generation from XML or Rust structures with flexbox layout"
 license = "MIT OR Apache-2.0"
