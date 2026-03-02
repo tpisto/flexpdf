@@ -1,8 +1,10 @@
+<img height="100" alt="flexpdf-logo2" src="https://github.com/user-attachments/assets/e7cc09af-8166-4c7a-8e21-3431c5e66c37" />
+
 # flexpdf
 
 flexpdf is a Rust library that renders a small, React-PDF-like XML syntax (or a Rust document model) into a PDF byte buffer. It aims for compatibility with [react-pdf](https://github.com/diegomura/react-pdf) layouts and styling. It is built on a flexbox layout engine and is designed to be easy to embed into other Rust programs.
 
-I have always been fascinated by how React-PDF makes it extremely easy to create PDF files (kudos to @diegomura and the authors) without first creating HTML + CSS and then converting that to a PDF file. React-PDF has awesome page-wrapping functionality and simple support for fonts. For me, it has been absolutely the most convenient way to create custom reports and various PDFs for my software.
+I have always been fascinated by how [React-PDF](https://react-pdf.org/) makes it extremely easy to create PDF files (kudos to @diegomura and the authors) without first creating HTML + CSS and then converting that to a PDF file. React-PDF has awesome page-wrapping functionality and simple support for fonts. For me, it has been absolutely the most convenient way to create custom reports and various PDFs for my software.
 
 The only problem with React-PDF is that it depends on the whole JavaScript/Node.js ecosystem. This library is trying to replicate the same great flexbox-based PDF creation idea, but natively. There are multiple test cases, and there is high 1:1 parity in the output PDFs. If you find any edge cases, please open a PR.
 
@@ -17,25 +19,18 @@ The only problem with React-PDF is that it depends on the whole JavaScript/Node.
 
 ## Installation
 
-```toml
-[dependencies]
-flexpdf = { path = "./flexpdf" }
-```
-
-## TLS backend selection
-
 By default, flexpdf uses reqwest with native TLS:
 
 ```toml
 [dependencies]
-flexpdf = "0.1.4"
+flexpdf = "0.1.5"
 ```
 
 To use rustls instead:
 
 ```toml
 [dependencies]
-flexpdf = { version = "0.1.4", default-features = false, features = ["tls-rustls"] }
+flexpdf = { version = "0.1.5", default-features = false, features = ["tls-rustls"] }
 ```
 
 Available TLS features:
